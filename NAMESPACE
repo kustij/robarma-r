@@ -1,0 +1,2 @@
+useDynLib(robarmaR, .registration = TRUE)
+import(Rcpp)
