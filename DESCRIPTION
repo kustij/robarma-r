@@ -1,12 +1,14 @@
-Package: robarmaR
+Package: robarma
 Type: Package
 Title: R Wrapper for RobARMA
 Version: 0.1.0
-Author: Your Name
-Maintainer: Your Email
+Author: Kusti Aholainen
+Maintainer: Kusti Aholainen <kusti.aholainen@gmail.com>
 Description: R interface to RobARMA C++ library (Eigen, Ceres, precompiled binaries bundled).
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 LinkingTo: Rcpp
 Imports: Rcpp
+Suggests: testthat
+Config/testthat/edition: 3

@@ -1,2 +1,10 @@
-useDynLib(robarmaR, .registration = TRUE)
+useDynLib(robarma, .registration = TRUE)
 import(Rcpp)
+
+export(ols)
+export(mle)
+export(ftau)
+export(s)
+export(mm)
+export(bip_mm)
+export(simulate)

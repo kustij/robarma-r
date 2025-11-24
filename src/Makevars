@@ -1,0 +1,2 @@
+PKG_CPPFLAGS = -I../external/robarma/include -I$(VCPKG_INCLUDE) -I$(VCPKG_EIGEN) -DGLOG_NO_ABBREVIATED_SEVERITIES $(shell "${R_HOME}/bin/Rscript" -e "Rcpp:::CxxFlags()")
+PKG_LIBS = -L$(VCPKG_LIB) -lceres -lglog -lgflags $(shell "${R_HOME}/bin/Rscript" -e "Rcpp:::LdFlags()")
