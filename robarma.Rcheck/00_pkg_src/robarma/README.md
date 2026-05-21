@@ -2,24 +2,12 @@
 
 R package wrapper for RobARMA C++ library.
 
-## Installation
-
-This package is intended for GitHub/source distribution rather than CRAN because it depends on Ceres and related native libraries.
-
-```r
-install.packages("remotes")
-remotes::install_github("<owner>/robarma-r")
-```
-
 ## Usage
 
 ```r
 library(robarma)
-
-y <- simulate(phi = c(0.5), theta = c(0.2), mu = 1, n = 100, seed = 123)
-model <- arma_model(y, 1, 1)
-fit <- mm(model)
-fit$params
+result <- ols(...)
+sim <- simulate(...)
 ```
 
 ## Build and Development Workflow
@@ -54,8 +42,3 @@ fit$params
   - Run `Rscript -e "Rcpp::compileAttributes();"`
   - Build and install the package
   - Run tests with `Rscript tests/testthat.R`
-
-### CRAN Status
-
-- Not currently CRAN-ready because the native build depends on Ceres, glog, and gflags.
-- The current packaging target is GitHub/devtools installation.

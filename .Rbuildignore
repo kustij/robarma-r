@@ -1,0 +1,4 @@
+^\.vscode$
+^external/robarma/\.git$
+^external/robarma/\.[^/]+$
+^robarma\.Rcheck$
