@@ -1,0 +1,65 @@
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+name: R-CMD-check
+
+jobs:
+    R-CMD-check:
+        runs-on: ${{ matrix.config.os }}
+        name: ${{ matrix.config.os }} (R ${{ matrix.config.r }})
+
+        strategy:
+            fail-fast: false
+            matrix:
+                config:
+                    - { os: macos-latest, r: "release" }
+                    - { os: ubuntu-latest, r: "release" }
+                    - { os: windows-latest, r: "release" }
+
+        env:
+            GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+            R_KEEP_PKG_SOURCE: yes
+
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            # ── Native dependencies ──────────────────────────────────────────────
+            - name: Install Ceres + Eigen (macOS)
+              if: runner.os == 'macOS'
+              run: brew install ceres-solver eigen
+
+            - name: Install Ceres + Eigen (Linux)
+              if: runner.os == 'Linux'
+              run: |
+                  sudo apt-get update -qq
+                  sudo apt-get install -y libceres-dev libeigen3-dev libgoogle-glog-dev libgflags-dev
+
+            - name: Install Ceres + Eigen (Windows)
+              if: runner.os == 'Windows'
+              run: |
+                  vcpkg install ceres:x64-windows eigen3:x64-windows
+                  echo "VCPKG_INCLUDE=C:/vcpkg/installed/x64-windows/include" >> $env:GITHUB_ENV
+                  echo "VCPKG_EIGEN=C:/vcpkg/installed/x64-windows/include/eigen3" >> $env:GITHUB_ENV
+                  echo "VCPKG_LIB=C:/vcpkg/installed/x64-windows/lib" >> $env:GITHUB_ENV
+
+            # ── R setup ──────────────────────────────────────────────────────────
+            - uses: r-lib/actions/setup-r@v2
+              with:
+                  r-version: ${{ matrix.config.r }}
+                  use-public-rspm: true
+
+            - uses: r-lib/actions/setup-r-dependencies@v2
+              with:
+                  extra-packages: any::rcmdcheck
+                  needs: check
+
+            # ── Build & check ─────────────────────────────────────────────────────
+            - uses: r-lib/actions/check-r-package@v2
+              with:
+                  upload-snapshots: true
+                  error-on: '"error"'

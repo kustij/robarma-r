@@ -1,2 +1,2 @@
-PKG_CPPFLAGS = -I../external/robarma/include -I$(VCPKG_INCLUDE) -I$(VCPKG_EIGEN) -DGLOG_NO_ABBREVIATED_SEVERITIES
-PKG_LIBS = -L$(VCPKG_LIB) -lceres -lglog -lgflags
+PKG_CPPFLAGS = -I../external/robarma/include -I/Users/kusti/vcpkg/installed/arm64-osx/include/eigen3 -I/Users/kusti/vcpkg/installed/arm64-osx/include -DGLOG_NO_ABBREVIATED_SEVERITIES
+PKG_LIBS = -L/Users/kusti/vcpkg/installed/arm64-osx/lib -lceres -L/Users/kusti/vcpkg/installed/arm64-osx/lib -lglog -L/Users/kusti/vcpkg/installed/arm64-osx/lib -lgflags

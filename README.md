@@ -1,14 +1,34 @@
 # RobARMA for R
 
-R package wrapper for RobARMA C++ library.
+R package wrapper for the RobARMA C++ library — robust and classical ARMA estimation.
 
 ## Installation
 
-This package is intended for GitHub/source distribution rather than CRAN because it depends on Ceres and related native libraries.
+### R-universe (binary — no compiler needed)
 
 ```r
-install.packages("remotes")
-remotes::install_github("<owner>/robarma-r")
+install.packages("robarma", repos = "https://kustij.r-universe.dev")
+```
+
+R-universe distributes pre-built binaries for macOS, Windows, and Linux.
+No Ceres, Eigen, or C++ toolchain required.
+
+### From source via remotes
+
+You need Ceres Solver and Eigen3 installed first:
+
+```bash
+# macOS
+brew install ceres-solver eigen
+
+# Ubuntu / Debian
+sudo apt-get install libceres-dev libeigen3-dev libgoogle-glog-dev libgflags-dev
+```
+
+Then:
+
+```r
+remotes::install_github("kustij/robarma-r")
 ```
 
 ## Usage
@@ -16,46 +36,35 @@ remotes::install_github("<owner>/robarma-r")
 ```r
 library(robarma)
 
-y <- simulate(phi = c(0.5), theta = c(0.2), mu = 1, n = 100, seed = 123)
+y     <- simulate(phi = c(0.5), theta = c(0.2), mu = 1, n = 100, seed = 123)
 model <- arma_model(y, 1, 1)
-fit <- mm(model)
+fit   <- mm(model)
 fit$params
 ```
 
-## Build and Development Workflow
+All estimators (`ols`, `mle`, `ftau`, `s`, `mm`, `bip_mm`) accept either an `arma_model` object or raw `y, p, q` arguments.
+
+## Development
 
 ### Prerequisites
 
-- vcpkg
+macOS: `brew install ceres-solver eigen`  
+Linux: `sudo apt-get install libceres-dev libeigen3-dev libgoogle-glog-dev libgflags-dev`
 
-### Building the project
+### Building
 
-- Compile attributes to generate RcppExports.cpp and RcppExports.R files in src directory
-  ```bash
-  Rscript 'Rcpp::compileAttributes()'
-  ```
-- Build package by running
-  ```bash
-  R CMD build .
-  ```
+```bash
+Rscript -e "Rcpp::compileAttributes()"
+R CMD build .
+R CMD INSTALL robarma_*.tar.gz
+```
+
+The `configure` script auto-detects Ceres and Eigen on macOS (Homebrew or vcpkg) and Linux (system packages). Set `VCPKG_INCLUDE`, `VCPKG_EIGEN`, and `VCPKG_LIB` to override.
 
 ### VS Code Tasks
 
-- You can use VS Code tasks for automation:
-  - `Rcpp: compileAttributes` (regenerates RcppExports)
-  - `Build R package` (runs R CMD build)
-  - `Install R package` (installs built tarball)
-  - `Test R package` (runs external tests)
-- See `.vscode/tasks.json` for configuration.
+`Rcpp: compileAttributes` → `Build R package` → `Install R package` → `Test R package`
 
-### CI Workflow
+### CI
 
-- In CI, add steps to:
-  - Run `Rscript -e "Rcpp::compileAttributes();"`
-  - Build and install the package
-  - Run tests with `Rscript tests/testthat.R`
-
-### CRAN Status
-
-- Not currently CRAN-ready because the native build depends on Ceres, glog, and gflags.
-- The current packaging target is GitHub/devtools installation.
+GitHub Actions workflow at `.github/workflows/R-CMD-check.yml` installs native dependencies and runs `R CMD check` on macOS, Linux, and Windows.

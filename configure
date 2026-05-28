@@ -1,0 +1,110 @@
+#!/bin/sh
+# configure — detect Ceres, Eigen, glog, gflags and write src/Makevars
+
+set -e
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+have_flag() {
+    echo "$1" | grep -qF -- "$2"
+}
+
+try_pkg_config() {
+    pkg-config --exists "$1" 2>/dev/null
+}
+
+# ── 1. Eigen include ─────────────────────────────────────────────────────────
+
+if [ -n "$VCPKG_EIGEN" ] && [ -f "$VCPKG_EIGEN/Eigen/Dense" ]; then
+    EIGEN_INCLUDE="$VCPKG_EIGEN"
+elif [ -n "$VCPKG_INCLUDE" ] && [ -f "$VCPKG_INCLUDE/eigen3/Eigen/Dense" ]; then
+    EIGEN_INCLUDE="$VCPKG_INCLUDE/eigen3"
+elif [ -f "/opt/homebrew/include/eigen3/Eigen/Dense" ]; then
+    EIGEN_INCLUDE="/opt/homebrew/include/eigen3"
+elif [ -f "/usr/include/eigen3/Eigen/Dense" ]; then
+    EIGEN_INCLUDE="/usr/include/eigen3"
+elif try_pkg_config eigen3; then
+    EIGEN_INCLUDE=$(pkg-config --variable=includedir eigen3)/eigen3
+else
+    echo "ERROR: Eigen3 not found. Install it with:" >&2
+    echo "  macOS:  brew install eigen" >&2
+    echo "  Linux:  sudo apt-get install libeigen3-dev" >&2
+    exit 1
+fi
+
+echo "Found Eigen3 at: ${EIGEN_INCLUDE}"
+
+# ── 2. Ceres include + libs ───────────────────────────────────────────────────
+
+if [ -n "$VCPKG_INCLUDE" ] && [ -f "$VCPKG_INCLUDE/ceres/ceres.h" ]; then
+    CERES_INCLUDE="$VCPKG_INCLUDE"
+    CERES_LIB="-L${VCPKG_LIB} -lceres"
+elif [ -f "/opt/homebrew/include/ceres/ceres.h" ]; then
+    CERES_INCLUDE="/opt/homebrew/include"
+    CERES_LIB="-L/opt/homebrew/lib -lceres"
+elif [ -f "/usr/include/ceres/ceres.h" ]; then
+    CERES_INCLUDE="/usr/include"
+    CERES_LIB="-lceres"
+elif try_pkg_config ceres-solver; then
+    CERES_INCLUDE=$(pkg-config --variable=includedir ceres-solver)
+    CERES_LIB=$(pkg-config --libs ceres-solver)
+else
+    echo "ERROR: Ceres not found. Install it with:" >&2
+    echo "  macOS:  brew install ceres-solver" >&2
+    echo "  Linux:  sudo apt-get install libceres-dev" >&2
+    exit 1
+fi
+
+echo "Found Ceres at: ${CERES_INCLUDE}"
+
+# ── 3. glog ───────────────────────────────────────────────────────────────────
+
+if [ -n "$VCPKG_LIB" ] && ls "$VCPKG_LIB"/libglog* >/dev/null 2>&1; then
+    GLOG_INCLUDE="${VCPKG_INCLUDE}"
+    GLOG_LIB="-L${VCPKG_LIB} -lglog"
+elif [ -f "/opt/homebrew/include/glog/logging.h" ]; then
+    GLOG_INCLUDE="/opt/homebrew/include"
+    GLOG_LIB="-L/opt/homebrew/lib -lglog"
+elif try_pkg_config libglog; then
+    GLOG_INCLUDE=$(pkg-config --variable=includedir libglog)
+    GLOG_LIB=$(pkg-config --libs libglog)
+else
+    # Ceres bundles glog on some platforms; try without explicit flag
+    GLOG_INCLUDE=""
+    GLOG_LIB=""
+fi
+
+# ── 4. gflags ─────────────────────────────────────────────────────────────────
+
+if [ -n "$VCPKG_LIB" ] && ls "$VCPKG_LIB"/libgflags* >/dev/null 2>&1; then
+    GFLAGS_LIB="-L${VCPKG_LIB} -lgflags"
+elif [ -f "/opt/homebrew/lib/libgflags.dylib" ] || [ -f "/opt/homebrew/lib/libgflags.a" ]; then
+    GFLAGS_LIB="-L/opt/homebrew/lib -lgflags"
+elif try_pkg_config gflags; then
+    GFLAGS_LIB=$(pkg-config --libs gflags)
+else
+    GFLAGS_LIB=""
+fi
+
+# ── 5. Compose final flags ────────────────────────────────────────────────────
+
+PKG_CPPFLAGS="-I../external/robarma/include -I${EIGEN_INCLUDE} -I${CERES_INCLUDE} -DGLOG_NO_ABBREVIATED_SEVERITIES"
+if [ -n "$GLOG_INCLUDE" ] && [ "$GLOG_INCLUDE" != "$CERES_INCLUDE" ]; then
+    PKG_CPPFLAGS="${PKG_CPPFLAGS} -I${GLOG_INCLUDE}"
+fi
+
+PKG_LIBS="${CERES_LIB} ${GLOG_LIB} ${GFLAGS_LIB}"
+# Trim leading/trailing whitespace
+PKG_LIBS=$(echo "$PKG_LIBS" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+echo "PKG_CPPFLAGS = ${PKG_CPPFLAGS}"
+echo "PKG_LIBS     = ${PKG_LIBS}"
+
+# ── 6. Write Makevars ─────────────────────────────────────────────────────────
+
+sed \
+    -e "s|@PKG_CPPFLAGS@|${PKG_CPPFLAGS}|" \
+    -e "s|@PKG_LIBS@|${PKG_LIBS}|" \
+    src/Makevars.in > src/Makevars
+
+echo "Wrote src/Makevars"

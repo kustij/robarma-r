@@ -1,4 +1,6 @@
 ^\.vscode$
+^\.github$
 ^external/robarma/\.git$
 ^external/robarma/\.[^/]+$
 ^robarma\.Rcheck$
+^robarma_.*\.tar\.gz$

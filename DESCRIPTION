@@ -4,12 +4,14 @@ Title: R Wrapper for RobARMA
 Version: 0.1.0
 Authors@R: person(given = "Kusti", family = "Aholainen", role = c("aut", "cre"), email = "kusti.aholainen@gmail.com")
 Maintainer: Kusti Aholainen <kusti.aholainen@gmail.com>
-Description: R interface to the RobARMA C++ library for ARMA simulation and estimation.
+Description: R interface to the RobARMA C++ library providing robust and classical
+    ARMA estimation methods (OLS, MLE, S, MM, BIP-MM, filtered tau) and simulation.
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
 LinkingTo: Rcpp
 Imports: Rcpp
 Suggests: testthat
 Config/testthat/edition: 3
-SystemRequirements: Ceres, glog, gflags
+SystemRequirements: Ceres Solver (>= 2.0), Eigen3 (>= 3.4), glog, gflags
+    (macOS: brew install ceres-solver eigen;
+     Linux: libceres-dev libeigen3-dev libgoogle-glog-dev libgflags-dev)
