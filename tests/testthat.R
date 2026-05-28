@@ -1,4 +1,4 @@
 library(testthat)
 library(robarma)
 
-test_dir("tests/testthat")
+test_check("robarma")
